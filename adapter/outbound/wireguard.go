@@ -308,6 +308,9 @@ func NewWireGuard(option WireGuardOption) (*WireGuard, error) {
 	return outbound, nil
 }
 
+func (w *WireGuard) Subscribe() string{
+	return w.option.RawLine
+}
 func (w *WireGuard) resolve(ctx context.Context, address M.Socksaddr) (netip.AddrPort, error) {
 	if address.Addr.IsValid() {
 		return address.AddrPort(), nil

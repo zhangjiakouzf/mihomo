@@ -305,3 +305,6 @@ func (gb *GroupBase) onDialSuccess() {
 		gb.failedTimes = 0
 	}
 }
+func (gb *GroupBase) Subscribe() string{
+	return "" 
+}

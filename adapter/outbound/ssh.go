@@ -53,6 +53,9 @@ func (s *Ssh) DialContext(ctx context.Context, metadata *C.Metadata) (_ C.Conn, 
 
 	return NewConn(c, s), nil
 }
+func (s *Ssh) Subscribe() string{
+	return s.option.RawLine
+}
 
 func (s *Ssh) connect(ctx context.Context, addr string) (client *ssh.Client, err error) {
 	s.cMutex.Lock()

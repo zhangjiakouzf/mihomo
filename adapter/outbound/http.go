@@ -83,6 +83,10 @@ func (h *Http) ProxyInfo() C.ProxyInfo {
 	return info
 }
 
+func (h *Http) Subscribe() string{
+	return h.option.RawLine
+}
+
 func (h *Http) shakeHandContext(ctx context.Context, c net.Conn, metadata *C.Metadata) (err error) {
 	if ctx.Done() != nil {
 		done := N.SetupContextForConn(ctx, c)

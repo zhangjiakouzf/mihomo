@@ -11,6 +11,8 @@ import (
 	"github.com/metacubex/mihomo/component/resource"
 	C "github.com/metacubex/mihomo/constant"
 	P "github.com/metacubex/mihomo/constant/provider"
+	"github.com/metacubex/mihomo/log"
+	"github.com/lestrrat-go/strftime"
 
 	"github.com/dlclark/regexp2"
 )
@@ -111,17 +113,24 @@ func ParseProxyProvider(name string, mapping map[string]any) (P.ProxyProvider, e
 		if !C.Path.IsSafePath(path) {
 			return nil, C.Path.ErrNotSafePath(path)
 		}
+		log.Debugln("schema.Path:%s",schema.Path)
+
 		vehicle = resource.NewFileVehicle(path)
 	case "http":
-		path := C.Path.GetPathByHash("proxies", schema.URL)
+		now := time.Now()  // 获取当前时间
+		f, _ := strftime.New(schema.URL)
+		real_url := f.FormatString(now)
+		log.Infoln("real_url:%s", real_url)
+		path := C.Path.GetPathByHash("proxies", real_url)
 		if schema.Path != "" {
 			path = C.Path.Resolve(schema.Path)
 			if !C.Path.IsSafePath(path) {
 				return nil, C.Path.ErrNotSafePath(path)
 			}
 		}
-		vehicle = resource.NewHTTPVehicle(schema.URL, path, schema.Proxy, schema.Header, resource.DefaultHttpTimeout, schema.SizeLimit)
+		vehicle = resource.NewHTTPVehicle(real_url, path, schema.Proxy, schema.Header, resource.DefaultHttpTimeout, schema.SizeLimit)
 	case "inline":
+		log.Debugln("inline:%s",name)
 		return NewInlineProvider(name, schema.Payload, parser, hc)
 	default:
 		return nil, fmt.Errorf("%w: %s", errVehicleType, schema.Type)

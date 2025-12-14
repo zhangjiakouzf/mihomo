@@ -100,6 +100,10 @@ func (s *Snell) DialContext(ctx context.Context, metadata *C.Metadata) (_ C.Conn
 	return NewConn(c, s), err
 }
 
+func (s *Snell) Subscribe() string{
+	return s.option.RawLine
+}
+
 // ListenPacketContext implements C.ProxyAdapter
 func (s *Snell) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (C.PacketConn, error) {
 	var err error

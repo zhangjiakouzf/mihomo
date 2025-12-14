@@ -52,6 +52,10 @@ func (d *Dns) ResolveUDP(ctx context.Context, metadata *C.Metadata) error {
 	return nil
 }
 
+func (d *Dns) Subscribe() string{
+	return ""
+}
+
 type dnsPacket struct {
 	data []byte
 	put  func()

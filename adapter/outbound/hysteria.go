@@ -57,6 +57,9 @@ func (h *Hysteria) DialContext(ctx context.Context, metadata *C.Metadata) (C.Con
 
 	return NewConn(tcpConn, h), nil
 }
+func (h *Hysteria) Subscribe() string{
+	return h.option.RawLine
+}
 
 func (h *Hysteria) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (C.PacketConn, error) {
 	if err := h.ResolveUDP(ctx, metadata); err != nil {

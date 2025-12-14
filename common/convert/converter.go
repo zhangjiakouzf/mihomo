@@ -66,7 +66,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 			hysteria["down"] = down
 			hysteria["up"] = up
 			hysteria["skip-cert-verify"], _ = strconv.ParseBool(query.Get("insecure"))
-
+			hysteria["line"] = line 
 			proxies = append(proxies, hysteria)
 
 		case "hysteria2", "hy2":
@@ -101,6 +101,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 			hysteria2["down"] = query.Get("down")
 			hysteria2["up"] = query.Get("up")
 
+			hysteria2["line"] = line 
 			proxies = append(proxies, hysteria2)
 
 		case "tuic":
@@ -144,6 +145,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 				tuic["udp-relay-mode"] = udpRelayMode
 			}
 
+			tuic["line"] = line 
 			proxies = append(proxies, tuic)
 
 		case "trojan":
@@ -201,6 +203,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 				trojan["client-fingerprint"] = fingerprint
 			}
 
+			trojan["line"] = line 
 			proxies = append(proxies, trojan)
 
 		case "vless":
@@ -224,6 +227,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 			if encryption := query.Get("encryption"); encryption != "" {
 				vless["encryption"] = encryption
 			}
+			vless["line"] = line 
 			proxies = append(proxies, vless)
 
 		case "vmess":
@@ -380,6 +384,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 				vmess["grpc-opts"] = grpcOpts
 			}
 
+			vmess["line"] = line 
 			proxies = append(proxies, vmess)
 
 		case "ss":
@@ -459,6 +464,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 				}
 			}
 
+			ss["line"] = line 
 			proxies = append(proxies, ss)
 
 		case "ssr":
@@ -518,6 +524,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 				ssr["protocol-param"] = protocolParam
 			}
 
+			ssr["line"] = line 
 			proxies = append(proxies, ssr)
 
 		case "socks", "socks5", "socks5h", "http", "https":
@@ -570,6 +577,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 				socks["tls"] = true
 			}
 
+			socks["line"] = line 
 			proxies = append(proxies, socks)
 
 		case "anytls":
@@ -613,6 +621,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 			anytls["skip-cert-verify"] = insecureBool
 			anytls["udp"] = true
 
+			anytls["line"] = line 
 			proxies = append(proxies, anytls)
 		}
 	}

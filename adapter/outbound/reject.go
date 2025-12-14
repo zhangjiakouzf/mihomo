@@ -29,6 +29,9 @@ func (r *Reject) DialContext(ctx context.Context, metadata *C.Metadata) (C.Conn,
 	return NewConn(nopConn{}, r), nil
 }
 
+func (r *Reject) Subscribe() string{
+	return ""
+}
 // ListenPacketContext implements C.ProxyAdapter
 func (r *Reject) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (C.PacketConn, error) {
 	if err := r.ResolveUDP(ctx, metadata); err != nil {

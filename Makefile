@@ -12,9 +12,9 @@ VERSION=$(shell git rev-parse --short HEAD)
 endif
 
 BUILDTIME=$(shell date -u)
-GOBUILD=CGO_ENABLED=0 go build -tags with_gvisor -trimpath -ldflags '-X "github.com/metacubex/mihomo/constant.Version=$(VERSION)" \
+GOBUILD=CGO_ENABLED=0 go build -tags with_gvisor -gcflags=all="-N -l" -ldflags '-X "github.com/metacubex/mihomo/constant.Version=$(VERSION)" \
 		-X "github.com/metacubex/mihomo/constant.BuildTime=$(BUILDTIME)" \
-		-w -s -buildid='
+		-buildid='
 
 PLATFORM_LIST = \
 	darwin-386 \
@@ -57,9 +57,7 @@ WINDOWS_ARCH_LIST = \
 	windows-arm64 \
     windows-arm32v7
 
-all:linux-amd64-v3 linux-arm64\
-	darwin-amd64-v3 darwin-arm64\
- 	windows-amd64-v3 windows-arm64\
+all:linux-amd64-v3
 
 
 darwin-all: darwin-amd64-v3 darwin-arm64

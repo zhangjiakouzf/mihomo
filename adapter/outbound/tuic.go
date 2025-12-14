@@ -74,6 +74,10 @@ func (t *Tuic) DialContext(ctx context.Context, metadata *C.Metadata) (C.Conn, e
 	}
 	return NewConn(conn, t), err
 }
+func (t *Tuic) Subscribe() string{
+	return t.option.RawLine
+}
+
 
 // ListenPacketContext implements C.ProxyAdapter
 func (t *Tuic) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (_ C.PacketConn, err error) {

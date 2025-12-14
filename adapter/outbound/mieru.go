@@ -91,6 +91,9 @@ func (m *Mieru) DialContext(ctx context.Context, metadata *C.Metadata) (C.Conn, 
 	}
 	return NewConn(c, m), nil
 }
+func (m *Mieru) Subscribe() string{
+	return m.option.RawLine
+}
 
 // ListenPacketContext implements C.ProxyAdapter
 func (m *Mieru) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (_ C.PacketConn, err error) {

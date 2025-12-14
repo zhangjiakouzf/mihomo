@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"encoding/base64"
+	"net/url"
+	"strings"
 
 	N "github.com/metacubex/mihomo/common/net"
 	"github.com/metacubex/mihomo/common/structure"
@@ -479,4 +482,191 @@ func NewShadowSocks(option ShadowSocksOption) (*ShadowSocks, error) {
 	}
 	outbound.dialer = option.NewDialer(outbound.DialOptions())
 	return outbound, nil
+}
+func (ss *ShadowSocks) Subscribe() string {
+	return ss.option.RawLine
+}
+// EncodeToV2RaySubscription 将单个 ShadowSocks 实例编码为 v2ray 系客户端通用的 ss:// 链接
+// 支持：普通、simple-obfs、v2ray-plugin、gost-plugin、shadow-tls、restls
+
+func (ss *ShadowSocks) Subscribe1() string {
+	if ss == nil || ss.option == nil {
+		return ""
+//		return "", fmt.Errorf("empty shadowsocks config")
+	}
+	o := ss.option
+
+	// 1. 基础部分：method:password@server:port
+	userInfo := o.Cipher + ":" + o.Password
+	userInfoEncoded := base64.URLEncoding.EncodeToString([]byte(userInfo))
+
+	server := o.Server
+	port := o.Port
+
+	base := fmt.Sprintf("ss://%s@%s:%d", userInfoEncoded, server, port)
+
+	// 2. 处理插件 / obfs
+	query := url.Values{}
+
+	// 名称（大多数客户端会显示这个）
+	if o.Name != "" {
+		query.Set("remarks", o.Name)
+		// 部分客户端（如 Clash Meta）用 group，其他的用 remarks 都行
+		query.Set("group", "ShadowSocks")
+	}
+
+	// 公共字段
+	if o.UDP {
+		query.Set("udp", "1")
+	}
+	if o.ClientFingerprint != "" {
+		query.Set("fp", o.ClientFingerprint)
+	}
+
+	// ======== 插件处理 ========
+	if o.Plugin != "" || ss.obfsMode != "" || ss.v2rayOption != nil ||
+		ss.gostOption != nil || ss.shadowTLSOption != nil || ss.restlsConfig != nil {
+
+		pluginName := ""
+		pluginOpts := []string{}
+
+		// 1. simple-obfs（旧版 v2ray-plugin 也兼容 http/tls 模式）
+		if ss.obfsMode == "http" || ss.obfsMode == "tls" || ss.obfsOption != nil {
+			pluginName = "obfs"
+			mode := ss.obfsMode
+			if ss.obfsOption != nil && ss.obfsOption.Mode != "" {
+				mode = ss.obfsOption.Mode
+			}
+			pluginOpts = append(pluginOpts, "obfs="+mode)
+
+			host := ss.obfsOption.Host
+			if ss.v2rayOption != nil && ss.v2rayOption.Host != "" {
+				host = ss.v2rayOption.Host
+			}
+			if host != "" {
+				pluginOpts = append(pluginOpts, "obfs-host="+host)
+			}
+		}
+
+		// 2. v2ray-plugin（推荐写法）
+		if ss.v2rayOption != nil /*&& ss.v2rayOption.Mode != ""*/ {
+			pluginName = "v2ray-plugin"
+//			pluginOpts = append(pluginOpts, "mode="+ss.v2rayOption.Mode)
+
+			if ss.v2rayOption.TLS {
+				pluginOpts = append(pluginOpts, "tls")
+			}
+			if ss.v2rayOption.Host != "" {
+				pluginOpts = append(pluginOpts, "host="+ss.v2rayOption.Host)
+			}
+			if ss.v2rayOption.Path != "" {
+				pluginOpts = append(pluginOpts, "path="+ss.v2rayOption.Path)
+			}
+			if ss.v2rayOption.Fingerprint != "" {
+				pluginOpts = append(pluginOpts, "fp="+ss.v2rayOption.Fingerprint)
+			}
+			if ss.v2rayOption.SkipCertVerify {
+				pluginOpts = append(pluginOpts, "skip-cert-verify")
+			}
+			if ss.v2rayOption.Mux {
+				pluginOpts = append(pluginOpts, "mux")
+			}
+			if ss.v2rayOption.V2rayHttpUpgrade {
+				pluginOpts = append(pluginOpts, "http-upgrade")
+			}
+			if ss.v2rayOption.V2rayHttpUpgradeFastOpen {
+				pluginOpts = append(pluginOpts, "fast-open")
+			}
+			// headers
+			for k, v := range ss.v2rayOption.Headers {
+				pluginOpts = append(pluginOpts, "header-"+k+"="+v)
+			}
+		}
+
+		// 3. gost-plugin
+		if ss.gostOption != nil /* && ss.gostOption.Mode != ""*/ {
+			pluginName = "gost-plugin"
+//			pluginOpts = append(pluginOpts, "mode="+ss.gostOption.Mode)
+			if ss.gostOption.Host != "" {
+				pluginOpts = append(pluginOpts, "host="+ss.gostOption.Host)
+			}
+			if ss.gostOption.Path != "" {
+				pluginOpts = append(pluginOpts, "path="+ss.gostOption.Path)
+			}
+			if ss.gostOption.TLS {
+				pluginOpts = append(pluginOpts, "tls")
+			}
+			// 其他字段同 v2ray-plugin，略
+		}
+
+		// 4. shadow-tls（新版 ShadowTLS v2/v3）
+		if ss.shadowTLSOption != nil && ss.shadowTLSOption.Password != "" {
+			pluginName = "shadow-tls"
+			pluginOpts = append(pluginOpts, "password="+ss.shadowTLSOption.Password)
+			pluginOpts = append(pluginOpts, "version="+strconv.Itoa(ss.shadowTLSOption.Version))
+			if ss.shadowTLSOption.Host != "" {
+				pluginOpts = append(pluginOpts, "sni="+ss.shadowTLSOption.Host)
+			}
+			if ss.shadowTLSOption.Fingerprint != "" {
+				pluginOpts = append(pluginOpts, "fp="+ss.shadowTLSOption.Fingerprint)
+			}
+			if len(ss.shadowTLSOption.ALPN) > 0 {
+				pluginOpts = append(pluginOpts, "alpn="+strings.Join(ss.shadowTLSOption.ALPN, ","))
+			}
+		}
+
+		// 5. restls（极少数实现）
+		if ss.restlsConfig != nil /* && ss.restlsConfig.Password != ""*/ {
+			pluginName = "restls"
+//			pluginOpts = append(pluginOpts, "password="+ss.restlsConfig.Password)
+				}
+
+		// 最终 plugin 参数
+		if pluginName != "" {
+			query.Set("plugin", pluginName+";"+strings.Join(pluginOpts, ";"))
+		}
+	}
+
+	// 如果有自定义 plugin（用户自己在 YAML/JSON 里写了 plugin 字段）
+	if o.Plugin != "" && query.Get("plugin") == "" {
+		opts := ""
+		if len(o.PluginOpts) > 0 {
+			var parts []string
+			for k, v := range o.PluginOpts {
+				parts = append(parts, fmt.Sprintf("%s=%v", k, v))
+			}
+			opts = ";" + strings.Join(parts, ";")
+		}
+		query.Set("plugin", o.Plugin+opts)
+	}
+
+	// 拼接最终链接
+	if len(query) > 0 {
+		base += "?" + query.Encode()
+	}
+	base += "#" + url.QueryEscape(o.Name)
+
+	return base
+}
+/*
+// 批量转成订阅内容（一行一个 base64 前的链接，最后再整体 base64）
+func EncodeShadowsocksSliceToSubscription(slices []*ShadowSocks) (string, error) {
+	var lines []string
+	for _, ss := range slices {
+		link, err := ss.EncodeToV2RayLink()
+		if err != nil {
+			return "", err
+		}
+		lines = append(lines, link)
+	}
+	raw := strings.Join(lines, "\n")
+	return base64.StdEncoding.EncodeToString([]byte(raw)), nil
+}
+*/
+// ---------- 辅助函数 ----------
+func appendOpts(slice []string, s string) []string {
+	if s != "" {
+		return append(slice, s)
+	}
+	return slice
 }

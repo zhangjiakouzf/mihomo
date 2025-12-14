@@ -6,12 +6,17 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"strings"
+	"encoding/base64"
+	"slices"
 
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/profile/cachefile"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/tunnel"
+	"github.com/metacubex/mihomo/log"
+
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -24,6 +29,8 @@ var (
 func proxyRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", getProxies)
+	r.Get("/subscribe", getSubscribe)
+	r.Get("/subscribeBase64", getSubscribeBase64)
 
 	r.Route("/{name}", func(r chi.Router) {
 		r.Use(parseProxyName, findProxyByName)
@@ -34,7 +41,28 @@ func proxyRouter() http.Handler {
 	})
 	return r
 }
-
+/*
+func dumpSubscribe(){
+}
+func process() {
+	ticker := time.NewTicker(50000)
+	for {
+		select {
+		case <-ticker.C:
+			
+			since := time.Since(lastTouch)
+			if since < hc.interval {
+				dumpSubscribe()
+			} else {
+				log.Debugln("Skip once health check because we are lazy")
+			}
+		case <-hc.ctx.Done():
+			ticker.Stop()
+			return
+		}
+	}
+}
+*/
 func parseProxyName(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := getEscapeParam(r, "name")
@@ -57,6 +85,31 @@ func findProxyByName(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), CtxKeyProxy, proxy)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+func getSubscribeRaw() string {
+	proxies := tunnel.ProxiesWithProviders()
+	var subscribeSlice []string
+	for _, p := range proxies {
+		if p.AliveForTestUrl("") {
+			subscribe := p.Adapter().Subscribe()
+			if subscribe != "" {
+				subscribeSlice = append(subscribeSlice, subscribe)
+				log.Infoln("subscribe:%s", subscribe)
+			}
+		}
+	}
+	slices.Sort(subscribeSlice)
+	return strings.Join(subscribeSlice,"\n")
+}
+
+func getSubscribe(w http.ResponseWriter, r *http.Request) {
+	render.PlainText(w, r, getSubscribeRaw() )
+}
+
+func getSubscribeBase64(w http.ResponseWriter, r *http.Request) {
+	subscribe := getSubscribeRaw()
+	subscribeBase64 := base64.StdEncoding.EncodeToString([]byte(subscribe))
+	render.PlainText(w, r, subscribeBase64 )
 }
 
 func getProxies(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +187,8 @@ func getProxyDelay(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil || delay == 0 {
 		render.Status(r, http.StatusServiceUnavailable)
-		if err != nil && delay != 0 {
+//		if err != nil && delay != 0 {
+		if err != nil {
 			render.JSON(w, r, err)
 		} else {
 			render.JSON(w, r, newError("An error occurred in the delay test"))

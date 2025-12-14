@@ -460,6 +460,7 @@ func NewProxiesParser(pdName string, filter string, excludeFilter string, exclud
 
 				proxy, err := adapter.ParseProxy(mapping, adapter.WithProviderName(pdName))
 				if err != nil {
+					continue
 					return nil, fmt.Errorf("proxy %d error: %w", idx, err)
 				}
 

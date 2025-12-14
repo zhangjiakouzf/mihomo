@@ -60,6 +60,9 @@ func (d *Direct) ResolveUDP(ctx context.Context, metadata *C.Metadata) error {
 	return nil
 }
 
+func (d *Direct) Subscribe() string{
+	return ""
+}
 func (d *Direct) IsL3Protocol(metadata *C.Metadata) bool {
 	return true // tell DNSDialer don't send domain to DialContext, avoid lookback to DefaultResolver
 }

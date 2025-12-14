@@ -265,6 +265,11 @@ func (v *Vless) DialContext(ctx context.Context, metadata *C.Metadata) (_ C.Conn
 	return NewConn(c, v), err
 }
 
+func (v *Vless) Subscribe() string{
+	return v.option.RawLine
+}
+
+
 // ListenPacketContext implements C.ProxyAdapter
 func (v *Vless) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (_ C.PacketConn, err error) {
 	if err = v.ResolveUDP(ctx, metadata); err != nil {

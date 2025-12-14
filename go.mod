@@ -1,6 +1,8 @@
 module github.com/metacubex/mihomo
 
-go 1.20
+go 1.21
+
+toolchain go1.24.10
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0
@@ -62,6 +64,8 @@ require (
 	google.golang.org/protobuf v1.34.2 // lastest version compatible with golang1.20
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/lestrrat-go/strftime v1.1.1
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect

@@ -78,6 +78,9 @@ func (ssr *ShadowSocksR) DialContext(ctx context.Context, metadata *C.Metadata) 
 	c, err = ssr.StreamConnContext(ctx, c, metadata)
 	return NewConn(c, ssr), err
 }
+func (ssr *ShadowSocksR) Subscribe() string{
+	return ssr.option.RawLine
+}
 
 // ListenPacketContext implements C.ProxyAdapter
 func (ssr *ShadowSocksR) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (C.PacketConn, error) {

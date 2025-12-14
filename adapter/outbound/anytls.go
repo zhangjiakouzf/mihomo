@@ -71,6 +71,10 @@ func (t *AnyTLS) SupportUOT() bool {
 	return true
 }
 
+func (t *AnyTLS) Subscribe() string{
+	return t.option.RawLine
+}
+
 // ProxyInfo implements C.ProxyAdapter
 func (t *AnyTLS) ProxyInfo() C.ProxyInfo {
 	info := t.Base.ProxyInfo()

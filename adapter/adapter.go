@@ -281,7 +281,7 @@ func NewProxy(adapter C.ProxyAdapter) *Proxy {
 	return &Proxy{
 		ProxyAdapter: adapter,
 		history:      queue.New[C.DelayHistory](defaultHistoriesNum),
-		alive:        atomic.NewBool(true),
+		alive:        atomic.NewBool(false),
 	}
 }
 

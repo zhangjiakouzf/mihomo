@@ -84,6 +84,10 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *C.Metadata) (_ C.Co
 	return NewConn(c, ss), nil
 }
 
+func (ss *Socks5) Subscribe() string{
+	return ss.option.RawLine
+}
+
 // ListenPacketContext implements C.ProxyAdapter
 func (ss *Socks5) ListenPacketContext(ctx context.Context, metadata *C.Metadata) (_ C.PacketConn, err error) {
 	if err = ss.ResolveUDP(ctx, metadata); err != nil {
