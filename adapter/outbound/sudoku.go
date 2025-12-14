@@ -136,6 +136,10 @@ func (s *Sudoku) buildConfig(metadata *C.Metadata) (*sudoku.ProtocolConfig, erro
 	return &cfg, nil
 }
 
+func (s *Sudoku) Subscribe() string{
+	return s.option.RawLine
+}
+
 func NewSudoku(option SudokuOption) (*Sudoku, error) {
 	if option.Server == "" {
 		return nil, fmt.Errorf("server is required")
